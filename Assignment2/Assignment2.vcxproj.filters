@@ -30,6 +30,12 @@
     <ClCompile Include="..\..\..\..\..\Downloads\F16-PA2_code\Windows\sceneModule.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source1.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\..\Downloads\F16-PA2_code\Windows\i_my_gl.h">

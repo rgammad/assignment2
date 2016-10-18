@@ -151,6 +151,8 @@
     <ClCompile Include="..\..\..\..\..\Downloads\F16-PA2_code\Windows\main.cpp" />
     <ClCompile Include="..\..\..\..\..\Downloads\F16-PA2_code\Windows\my_gl.cpp" />
     <ClCompile Include="..\..\..\..\..\Downloads\F16-PA2_code\Windows\sceneModule.cpp" />
+    <ClCompile Include="Source.cpp" />
+    <ClCompile Include="Source1.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\..\Downloads\F16-PA2_code\Windows\inputModule.h" />
