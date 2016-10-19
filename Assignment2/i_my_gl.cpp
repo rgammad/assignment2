@@ -45,13 +45,17 @@ struct matrix_stack *current_stack = &model_view;
 // current = current * b
 void matrix_multiply(const GLdouble *b)
 {
-	GLdouble* temp = current_matrix;
+	GLdouble temp[16];
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
-			current_matrix[j * 4 + i] = 0;
-			for(int k = 0; k<4;k++)
-				current_matrix[j * 4 + i] += temp[k * 4 + i] * b[j * 4 + k];
+			temp[j * 4 + i] = current_matrix[0 * 4 + i] * b[j * 4 + 0] +
+				current_matrix[1 * 4 + i] * b[j * 4 + 1] +
+				current_matrix[2 * 4 + i] * b[j * 4 + 2] +
+				current_matrix[3 * 4 + i] * b[j * 4 + 3];
 		}
+	}
+	for (int i = 0; i < 16; i++) {
+		current_matrix[i] = temp[i];
 	}
 }
 
@@ -101,51 +105,24 @@ void I_my_glLoadIdentity(void)
 // Pushes current matrix onto current stack, report error if the stack is already full.
 void I_my_glPushMatrix(void)
 {
-	try {
-		if (current_stack == &model_view) {
-			if (model_view.top < STACK_CAP) {
-				for (int i = 0; i < 16; i++) {
-					model_view.m[model_view.top + 1][i] = current_matrix[i];
-				}
-				model_view.top++;
-			}
-			else
-				throw;
-		}
-		else {
-			if (projection.top < STACK_CAP) {
-				for (int i = 0; i < 16; i++)
-					projection.m[projection.top + 1][i] = current_matrix[i];
-				projection.top++;
-			}
-			else
-				throw;
+	if (current_stack->top < STACK_CAP - 1) {
+		for (int i = 0; i < 16; i++) {
+			current_stack->m[current_stack->top + 1][i] = current_matrix[i];
 		}
 	}
-	catch (...) {
-		std::cerr << "Error: current stack is full" << std::endl;
+	else {
+		std::cout << "Error: current stack is full" << std::endl;
 	}
 }
 
 // Pops current matrix from current stack, report error if the stack has only one matrix left.
 void I_my_glPopMatrix(void)
 {
-	try {
-		if (current_stack == &model_view) {
-			if (model_view.top > 1)
-				model_view.top--;
-			else
-				throw;
-		}
-		else {
-			if (projection.top > 1)
-				projection.top--;
-			else
-				throw;
-		}
+	if (current_stack->top > 1) {
+		current_stack->top--;
 	}
-	catch (...) {
-		std::cerr << "Error: there is only one matrix left in current stack" << std::endl;
+	else {
+		std::cout << "Error: there is only one matrix left in current stack" << std::endl;
 	}
 }
 
@@ -183,19 +160,38 @@ void I_my_glTranslatef(GLfloat x, GLfloat y, GLfloat z)
 // Remembers to normalize vector (x, y, z), and to convert angle from degree to radius before calling sin and cos.
 void I_my_glRotated(GLdouble angle, GLdouble x, GLdouble y, GLdouble z)
 {
-	I_my_glPushMatrix();
 	normalize(&x, &y, &z);
-	GLdouble radians = angle * (GLdouble)PI / (GLdouble)180.0;
-	GLdouble c = (GLdouble)cos(radians);
-	GLdouble s = (GLdouble)sin(radians);
-	GLdouble rotateMatrix[16] =
-	{
-		(x*x)*(1 - c) + c, (x*y)*(1 - c) - z*s, (x*z)*(1 - c) + y*s, 0,
-		(y*x)*(1 - c) + z*s, (y*y)*(1 - c) + c, (y*z)*(1 - c) + x*s, 0,
-		(x*z)*(1 - c) + y*s, (y*z)*(1 - c) + x*s, (z*z)*(1 - c) + c, 0,
-		0,0,0,1
-	};
-	matrix_multiply(rotateMatrix);
+	GLdouble radians = angle *PI / 180.0;
+	GLdouble s = sin(radians);
+	GLdouble c = cos(radians);
+	GLdouble xx = x*x;
+	GLdouble xy = x*y;
+	GLdouble xz = x*z;
+	GLdouble yy = y*y;
+	GLdouble yz = y*z;
+	GLdouble zz = z*z;
+
+	GLdouble rotationMatrix[16];
+	rotationMatrix[0] = xx + (1 - xx) * c;
+	rotationMatrix[4] = xy*(1 - c) - z*s;
+	rotationMatrix[8] = xz*(1 - c) + y*s;
+	rotationMatrix[12] = 0;
+
+	rotationMatrix[1] = xy*(1 - c) + z*s;
+	rotationMatrix[5] = yy + (1 - yy)*c;
+	rotationMatrix[9] = yz*(1 - c) - x*s;
+	rotationMatrix[13] = 0;
+
+	rotationMatrix[2] = xz*(1 - c) - y*s;
+	rotationMatrix[6] = yz*(1 - c) + x*s;
+	rotationMatrix[10] = zz + (1 - zz)*c;
+	rotationMatrix[14] = 0;
+
+	rotationMatrix[3] = 0;
+	rotationMatrix[7] = 0;
+	rotationMatrix[11] = 0;
+	rotationMatrix[15] = 1;
+	matrix_multiply(rotationMatrix);
 }
 
 void I_my_glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
@@ -241,13 +237,58 @@ void I_my_gluLookAt(GLdouble eyeX, GLdouble eyeY, GLdouble eyeZ,
 	GLdouble centerX, GLdouble centerY, GLdouble centerZ,
 	GLdouble upX, GLdouble upY, GLdouble upZ)
 {
-	// ...
+	GLdouble sx, sy, sz;
+	GLdouble fx = centerX - eyeX,
+		fy = centerY - eyeY,
+		fz = centerZ - eyeZ;
+	normalize(&fx, &fy, &fz);
+	cross_product(&sx, &sy, &sz, fx, fy, fz, upX, upY, upZ);
+	normalize(&sx, &sy, &sz);
+	cross_product(&upX, &upY, &upZ, sx, sy, sz, fx, fy, fz);
+
+	GLdouble lookAtMatrix[16];
+	lookAtMatrix[0] = sx;
+	lookAtMatrix[8] = sy;
+	lookAtMatrix[4] = sz;
+	lookAtMatrix[12] = 0;
+
+	lookAtMatrix[1] = upX;
+	lookAtMatrix[5] = upY;
+	lookAtMatrix[9] = upZ;
+	lookAtMatrix[13] = 0;
+
+	lookAtMatrix[2] = -fx;
+	lookAtMatrix[6] = -fy;
+	lookAtMatrix[10] = -fz;
+	lookAtMatrix[14] = 0;
+
+	lookAtMatrix[3] = 0;
+	lookAtMatrix[7] = 0;
+	lookAtMatrix[11] = 0;
+	lookAtMatrix[15] = 1;
+
+	matrix_multiply(lookAtMatrix);
 }
 
 void I_my_glFrustum(GLdouble left, GLdouble right, GLdouble bottom,
 	GLdouble top, GLdouble zNear, GLdouble zFar)
 {
-	// ...
+	if (zNear <= 0 || zFar <= 0 || left == right || bottom == top || zNear == zFar) {
+		std::cout << "Error: Invalid Inputs" << std::endl;
+	}
+
+	GLdouble	A = (right + left) / (right - left),
+				B = (top + bottom) / (top - bottom),
+				C = -((zFar + zNear) / (zFar - zNear)),
+				D = -2 * ((zFar + zNear) / (zFar - zNear));
+
+	GLdouble frustumMatrix[16] = {
+		(2 * zNear) / (right - left), 0, 0, 0,
+		0, (2 * zNear) / (top - bottom), 0, 0,
+		A, B, C, -1,
+		0,0,0,D
+	};
+	matrix_multiply(frustumMatrix);
 }
 
 // Based on the inputs, calculate left, right, bottom, top, and call I_my_glFrustum accordingly
@@ -255,5 +296,9 @@ void I_my_glFrustum(GLdouble left, GLdouble right, GLdouble bottom,
 void I_my_gluPerspective(GLdouble fovy, GLdouble aspect,
 	GLdouble zNear, GLdouble zFar)
 {
-	// ...
+	GLdouble top = tan(((fovy*PI) / 360)) * zNear;
+	GLdouble bottom = -top;
+	GLdouble right = top * aspect;
+	GLdouble left = bottom * aspect;
+	I_my_glFrustum(left, right, bottom, top, zNear, zFar);
 }
