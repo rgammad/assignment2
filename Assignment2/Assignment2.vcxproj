@@ -18,6 +18,19 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="inputModule.h" />
+    <ClInclude Include="i_my_gl.h" />
+    <ClInclude Include="my_gl.h" />
+    <ClInclude Include="sceneModule.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="inputModule.cpp" />
+    <ClCompile Include="i_my_gl.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="my_gl.cpp" />
+    <ClCompile Include="sceneModule.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{F1A53C18-9864-4AE1-8659-D3828A3EF460}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
@@ -145,21 +158,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\..\..\..\Downloads\F16-PA2_code\Windows\inputModule.cpp" />
-    <ClCompile Include="..\..\..\..\..\Downloads\F16-PA2_code\Windows\i_my_gl.cpp" />
-    <ClCompile Include="..\..\..\..\..\Downloads\F16-PA2_code\Windows\main.cpp" />
-    <ClCompile Include="..\..\..\..\..\Downloads\F16-PA2_code\Windows\my_gl.cpp" />
-    <ClCompile Include="..\..\..\..\..\Downloads\F16-PA2_code\Windows\sceneModule.cpp" />
-    <ClCompile Include="Source.cpp" />
-    <ClCompile Include="Source1.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\Downloads\F16-PA2_code\Windows\inputModule.h" />
-    <ClInclude Include="..\..\..\..\..\Downloads\F16-PA2_code\Windows\i_my_gl.h" />
-    <ClInclude Include="..\..\..\..\..\Downloads\F16-PA2_code\Windows\my_gl.h" />
-    <ClInclude Include="..\..\..\..\..\Downloads\F16-PA2_code\Windows\sceneModule.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

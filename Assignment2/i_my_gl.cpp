@@ -8,11 +8,14 @@
 #include <cmath>
 #include <stdexcept>
 #include <iostream>
+#include "i_my_gl.h" 
 
 // Defines maximum stack capacity.
 #define STACK_CAP 16
 // Defines pi for converting angles.
 #define PI 3.14159265359
+#define current(row,col) current[(col<<2)+row]
+#define b(row,col) b[(col<<2)+row]
 
 // Structure for the matrix stack, top specifies current top position on the stack, initially zero (which means one matrix in the stack).
 struct matrix_stack
@@ -42,14 +45,12 @@ struct matrix_stack *current_stack = &model_view;
 // current = current * b
 void matrix_multiply(const GLdouble *b)
 {
-	GLdouble* temp;
+	GLdouble* temp = current_matrix;
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
-			temp = current_matrix;
-			current_matrix[4 * i + j] = 0;
-			for (int k = 0; k < 4; k++) {
-				current_matrix[4 * i + j] += temp[4 * i + k] * temp[4 * k + j];
-			}
+			current_matrix[j * 4 + i] = 0;
+			for(int k = 0; k<4;k++)
+				current_matrix[j * 4 + i] += temp[k * 4 + i] * b[j * 4 + k];
 		}
 	}
 }
@@ -60,18 +61,18 @@ void cross_product(GLdouble *ax, GLdouble *ay, GLdouble *az,
 	GLdouble bx, GLdouble by, GLdouble bz,
 	GLdouble cx, GLdouble cy, GLdouble cz)
 {
-	ax = new GLdouble(by*cz - cy*bz);
-	ay = new GLdouble(bz*cx - cz*bx);
-	az = new GLdouble(bx*cy - cx*by);
+	*ax = by*cz - cy*bz;
+	*ay = bz*cx - cz*bx;
+	*az = bx*cy - cx*by;
 }
 
 // Normalizes vector (x, y, z).
 void normalize(GLdouble *x, GLdouble *y, GLdouble *z)
 {
-	float length = sqrt(*x * *x + *y * *y + *z * * z);
-	x = new GLdouble(*x / length);
-	y = new GLdouble(*y / length);
-	z = new GLdouble(*z / length);
+	GLdouble length = (GLdouble)sqrt(*x * *x + *y * *y + *z * * z);
+	*x = *x / length;
+	*y = *y / length;
+	*z = *z / length;
 }
 
 // Switches matrix mode by changing the current stack pointer.
@@ -80,8 +81,10 @@ void I_my_glMatrixMode(GLenum mode)
 	switch (mode) {
 	case GL_MODELVIEW:
 		current_stack = &model_view;
+		break;
 	case GL_PROJECTION:
 		current_stack = &projection;
+		break;
 	default:
 		break;
 	}
@@ -99,15 +102,27 @@ void I_my_glLoadIdentity(void)
 void I_my_glPushMatrix(void)
 {
 	try {
-		if (sizeof(current_stack) == STACK_CAP) {
-			throw;
+		if (current_stack == &model_view) {
+			if (model_view.top < STACK_CAP) {
+				for (int i = 0; i < 16; i++) {
+					model_view.m[model_view.top + 1][i] = current_matrix[i];
+				}
+				model_view.top++;
+			}
+			else
+				throw;
 		}
 		else {
-			current_stack->top += 1;
-			*current_stack->m[current_stack->top] = *current_matrix;
+			if (projection.top < STACK_CAP) {
+				for (int i = 0; i < 16; i++)
+					projection.m[projection.top + 1][i] = current_matrix[i];
+				projection.top++;
+			}
+			else
+				throw;
 		}
 	}
-	catch (int e) {
+	catch (...) {
 		std::cerr << "Error: current stack is full" << std::endl;
 	}
 }
@@ -116,15 +131,20 @@ void I_my_glPushMatrix(void)
 void I_my_glPopMatrix(void)
 {
 	try {
-		if (sizeof(current_stack) == 1) {
-			throw;
+		if (current_stack == &model_view) {
+			if (model_view.top > 1)
+				model_view.top--;
+			else
+				throw;
 		}
 		else {
-			current_stack->top -= 1;
-			current_matrix;
+			if (projection.top > 1)
+				projection.top--;
+			else
+				throw;
 		}
 	}
-	catch (int e) {
+	catch (...) {
 		std::cerr << "Error: there is only one matrix left in current stack" << std::endl;
 	}
 }
@@ -147,10 +167,11 @@ void I_my_glLoadMatrixd(const GLdouble *m)
 void I_my_glTranslated(GLdouble x, GLdouble y, GLdouble z)
 {
 	GLdouble translationMatrix[16] =
-	{ 1, 0, 0, x,
-	 0, 1, 0, y,
-	 0, 0, 1, z,
-	 0, 0, 0, 1 };
+	{ 1, 0, 0, 0,
+	  0, 1, 0, 0,
+	  0, 0, 1, 0,
+	  x, y, z, 1
+	};
 	matrix_multiply(translationMatrix);
 }
 
@@ -164,9 +185,9 @@ void I_my_glRotated(GLdouble angle, GLdouble x, GLdouble y, GLdouble z)
 {
 	I_my_glPushMatrix();
 	normalize(&x, &y, &z);
-	GLdouble radians = angle * PI / 180.0;
-	GLdouble c = cos(radians);
-	GLdouble s = sin(radians);
+	GLdouble radians = angle * (GLdouble)PI / (GLdouble)180.0;
+	GLdouble c = (GLdouble)cos(radians);
+	GLdouble s = (GLdouble)sin(radians);
 	GLdouble rotateMatrix[16] =
 	{
 		(x*x)*(1 - c) + c, (x*y)*(1 - c) - z*s, (x*z)*(1 - c) + y*s, 0,
@@ -204,7 +225,7 @@ void I_my_glScalef(GLfloat x, GLfloat y, GLfloat z)
 void I_my_glGetMatrixf(GLfloat *m)
 {
 	for (int i = 0; i < 16; i++) {
-		m[i] = current_matrix[i];
+		m[i] = (GLfloat)current_matrix[i];
 	}
 }
 

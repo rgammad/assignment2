@@ -1,18 +1,18 @@
 //
 // the following definitions overwrite original OpenGL functions with my_gl
 //
-//#define glMatrixMode my_glMatrixMode
-//#define glLoadIdentity my_glLoadIdentity
-//#define glPushMatrix my_glPushMatrix
-//#define glPopMatrix my_glPopMatrix
-//#define glLoadMatrixf my_glLoadMatrixf
-//#define glLoadMatrixd my_glLoadMatrixd
+#define glMatrixMode my_glMatrixMode
+#define glLoadIdentity my_glLoadIdentity
+#define glPushMatrix my_glPushMatrix
+#define glPopMatrix my_glPopMatrix
+#define glLoadMatrixf my_glLoadMatrixf
+#define glLoadMatrixd my_glLoadMatrixd
 //#define glTranslated my_glTranslated
 //#define glTranslatef my_glTranslatef
 //#define glRotated my_glRotated
 //#define glRotatef my_glRotatef
-//#define glScaled my_glScaled
-//#define glScalef my_glScalef
+#define glScaled my_glScaled
+#define glScalef my_glScalef
 //#define gluLookAt my_gluLookAt
 //#define glFrustum my_glFrustum
 //#define gluPerspective my_gluPerspective
