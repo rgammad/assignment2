@@ -286,7 +286,7 @@ void I_my_glFrustum(GLdouble left, GLdouble right, GLdouble bottom,
 		(2 * zNear) / (right - left), 0, 0, 0,
 		0, (2 * zNear) / (top - bottom), 0, 0,
 		A, B, C, -1,
-		0,0,0,D
+		0,0,D,0
 	};
 	matrix_multiply(frustumMatrix);
 }
