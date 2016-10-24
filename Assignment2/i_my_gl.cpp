@@ -290,7 +290,7 @@ void I_my_glFrustum(GLdouble left, GLdouble right, GLdouble bottom,
 	};
 	matrix_multiply(frustumMatrix);
 }
-
+//wtf
 // Based on the inputs, calculate left, right, bottom, top, and call I_my_glFrustum accordingly
 // remember to convert fovy from degree to radius before calling tan.
 void I_my_gluPerspective(GLdouble fovy, GLdouble aspect,
